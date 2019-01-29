@@ -8,17 +8,22 @@ import time
 pygame.init()
 
 # Constants
-board_rows = 10
-board_columns = 15
+board_rows = 15
+board_columns = 10
 tile_size = 25
 buffer_zone = 25
 empty_tile_color = (255, 255, 255)
 barrier_tile_color = (100, 100, 100)
 player_tile_color = (0, 255, 0)
 text_color = (255, 255, 255)
+button_default_color = (100, 100, 100)
+button_hover_color = (50, 50, 50)
+
 barrier_density = 0.15
 gen_alpha = 200
-menu_columns = 5
+menu_columns = 6
+button_rows = 2
+button_buffer_zone = 10
 
 font = pygame.font.Font("Code New Roman.ttf", tile_size)
 
@@ -31,7 +36,35 @@ board_color_dict = {'_': empty_tile_color,
 
 # Variables
 board = [[]]
+buttons = []
 
+# Classes
+class Button:
+    def __init__(self, x, y, width, height):
+        self.button = pygame.Surface((width, height))
+        self.x = x
+        self.y = y
+        self.hovered = False
+        buttons.append(self)
+        
+    def draw(self):
+        self.check_hovered()
+        self.button.fill(self.get_color())
+        screen.blit(self.button, (self.x, self.y))
+
+    def check_hovered(self):
+        if self.button.get_rect().collidepoint(pygame.mouse.get_pos()):
+            self.hovered = True
+        else:
+            self.hovered = False
+        
+    def get_color(self):
+        if self.hovered:
+            return button_hover_color
+        else:
+            return button_default_color
+        
+    
 # Generates the game board
 def generate_board():
     row_number = 0
@@ -68,6 +101,9 @@ def generate_board():
 def draw_board():
     row_number = 0
     column_number = 0
+
+    text_surface = font.render("Board", True, text_color)
+    screen.blit(text_surface, (buffer_zone + 6 * tile_size, buffer_zone))
     
     for row in board:
         for tile in row:
@@ -75,9 +111,6 @@ def draw_board():
             rectangle = pygame.Surface((tile_size, tile_size))
             rectangle.fill(board_color_dict[tile])
             screen.blit(rectangle, (row_number + buffer_zone, column_number + 2 * buffer_zone))
-
-            text_surface = font.render("Board", True, text_color)
-            screen.blit(text_surface, (buffer_zone + 6 * tile_size, buffer_zone))
             
             column_number = column_number + tile_size
             
@@ -86,18 +119,42 @@ def draw_board():
             
 # Displays the menu
 def draw_menu():
-    menu = pygame.Surface((tile_size * menu_columns, tile_size * board_rows))
+    menu = pygame.Surface((tile_size * menu_columns, tile_size * board_columns))
     menu.fill(empty_tile_color)
-    screen.blit(menu, (board_rows * tile_size + buffer_zone * 2, buffer_zone * 3))
+    screen.blit(menu, (board_rows * tile_size + buffer_zone * 2, buffer_zone * 2))
+
+    #Display buttons
+    button_host = pygame.Surface((tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows))
+    if button_host.get_rect().collidepoint(pygame.mouse.get_pos()):
+        button_host.fill(button_hover_color)
+    else:
+        button_host.fill(barrier_tile_color)
+    screen.blit(button_host, ((board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone)))
+
+    text_surface = font.render("Host", True, text_color)
+    screen.blit(text_surface, (18.9 * tile_size, buffer_zone + button_buffer_zone + button_rows * tile_size * 0.76))
+
+    button_join = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone * 2 + tile_size * button_rows,
+                         tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows)
+                         
+                         
+'''
+    button_join = pygame.Surface((tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows))
+    button_join.fill(barrier_tile_color)
+    screen.blit(button_join, ((board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone * 2 + tile_size * button_rows)))
+
+    text_surface = font.render("Join", True, text_color)
+    screen.blit(text_surface, (18.9 * tile_size, buffer_zone + 2 * button_buffer_zone + button_rows * tile_size * 1.76))
+'''
     
 screen = pygame.display.set_mode((game_width, game_height))
 game_status = "running"
 
 generate_board()
+draw_board()
+draw_menu()
+
 while game_status == "running":
-    draw_board()
-    draw_menu()
-    
     for event in pygame.event.get():
         
         
@@ -111,6 +168,10 @@ while game_status == "running":
         elif event.type == QUIT:
             running = False
         '''
+
+    for button in buttons:
+        button.draw()
+        
     pygame.display.flip()
 
 
