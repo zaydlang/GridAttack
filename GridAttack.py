@@ -40,20 +40,27 @@ buttons = []
 
 # Classes
 class Button:
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, text):
         self.button = pygame.Surface((width, height))
         self.x = x
         self.y = y
         self.hovered = False
         buttons.append(self)
+        self.rect = self.button.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.text_surface = font.render(text, True, text_color)
+        self.text_rect = self.text_surface.get_rect()
+        self.text_rect.center = self.rect.center
         
     def draw(self):
         self.check_hovered()
         self.button.fill(self.get_color())
         screen.blit(self.button, (self.x, self.y))
+        screen.blit(self.text_surface, self.text_rect)
 
     def check_hovered(self):
-        if self.button.get_rect().collidepoint(pygame.mouse.get_pos()):
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.hovered = True
         else:
             self.hovered = False
@@ -124,18 +131,12 @@ def draw_menu():
     screen.blit(menu, (board_rows * tile_size + buffer_zone * 2, buffer_zone * 2))
 
     #Display buttons
-    button_host = pygame.Surface((tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows))
-    if button_host.get_rect().collidepoint(pygame.mouse.get_pos()):
-        button_host.fill(button_hover_color)
-    else:
-        button_host.fill(barrier_tile_color)
-    screen.blit(button_host, ((board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone)))
-
-    text_surface = font.render("Host", True, text_color)
-    screen.blit(text_surface, (18.9 * tile_size, buffer_zone + button_buffer_zone + button_rows * tile_size * 0.76))
-
+    button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone,
+                         tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
+                         "Host")
     button_join = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone * 2 + tile_size * button_rows,
-                         tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows)
+                         tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
+                         "Join")
                          
                          
 '''
