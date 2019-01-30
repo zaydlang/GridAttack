@@ -37,6 +37,7 @@ board_color_dict = {'_': empty_tile_color,
 # Variables
 board = [[]]
 buttons = []
+menu_mode = 0
 
 # Classes
 class Button:
@@ -49,6 +50,7 @@ class Button:
         self.rect = self.button.get_rect()
         self.rect.x = x
         self.rect.y = y
+        self.text = text
         self.text_surface = font.render(text, True, text_color)
         self.text_rect = self.text_surface.get_rect()
         self.text_rect.center = self.rect.center
@@ -129,14 +131,20 @@ def draw_menu():
     menu = pygame.Surface((tile_size * menu_columns, tile_size * board_columns))
     menu.fill(empty_tile_color)
     screen.blit(menu, (board_rows * tile_size + buffer_zone * 2, buffer_zone * 2))
+    buttons.clear()
+    
+    if menu_mode == 0:
+        button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone,
+                             tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
+                             "Host")
+        button_join = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone * 2 + tile_size * button_rows,
+                             tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
+                             "Join")
 
-    #Display buttons
-    button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone,
-                         tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
-                         "Host")
-    button_join = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone * 2 + tile_size * button_rows,
-                         tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
-                         "Join")
+    elif menu_mode == 1:
+        button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone,
+                             tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
+                             "Cancel")
                          
                          
 '''
@@ -157,18 +165,20 @@ draw_menu()
 
 while game_status == "running":
     for event in pygame.event.get():
-        
-        
-        '''
-        # Check for KEYDOWN event; KEYDOWN is a constant defined in pygame.locals, which we imported earlier
-        if event.type == KEYDOWN:
-            # If the Esc key has been pressed set running to false to exit the main loop
-            if event.key == K_ESCAPE:
-                running = False
-        # Check for QUIT event; if QUIT, set running to false
-        elif event.type == QUIT:
-            running = False
-        '''
+        if pygame.mouse.get_pressed()[0] == 1:
+            for button in buttons:
+                if button.rect.collidepoint(pygame.mouse.get_pos()):
+                    action = button.text
+                    
+                    if action == "Host":
+                        menu_mode = 1
+                    elif action == "Join":
+                        menu_mode = 2
+                    elif action == "Cancel":
+                        menu_mode = 0
+                        
+                    draw_menu()
+                    break
 
     for button in buttons:
         button.draw()
