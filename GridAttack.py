@@ -3,6 +3,8 @@ import pygame
 import pygame.font
 from pygame.locals import *
 import random
+import socket
+import sys
 import time
 
 pygame.init()
@@ -28,6 +30,8 @@ menu_columns = 6
 button_rows = 2
 button_buffer_zone = 10
 font = pygame.font.Font("Code New Roman.ttf", tile_size)
+host = "localhost"
+port = 34197
 
 # Calculated Constants
 game_width = (board_rows + menu_columns) * tile_size + buffer_zone * 3
@@ -41,6 +45,7 @@ board = [[]]
 buttons = []
 input_boxes = []
 menu_mode = 0
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Classes
 class Button:
@@ -202,16 +207,6 @@ def draw_menu():
         button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 3 + button_buffer_zone * 3 + tile_size * button_rows * 2,
                              tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
                              "Cancel")
-                         
-                         
-'''
-    button_join = pygame.Surface((tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows))
-    button_join.fill(barrier_tile_color)
-    screen.blit(button_join, ((board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone * 2 + tile_size * button_rows)))
-
-    text_surface = font.render("Join", True, text_color)
-    screen.blit(text_surface, (18.9 * tile_size, buffer_zone + 2 * button_buffer_zone + button_rows * tile_size * 1.76))
-'''
     
 screen = pygame.display.set_mode((game_width, game_height))
 game_status = "running"
@@ -235,7 +230,10 @@ while game_status == "running":
                         menu_mode = 1
                     elif action == "Cancel":
                         menu_mode = 0
-                        
+                        s.close()
+                    elif action == "Connect":
+                        s.connect((host, port))
+                        s.send("hello there".encode())
                     break
         
         for box in input_boxes:
