@@ -16,15 +16,17 @@ empty_tile_color = (255, 255, 255)
 barrier_tile_color = (100, 100, 100)
 player_tile_color = (0, 255, 0)
 text_color = (255, 255, 255)
+menu_text_color = (0, 0, 0)
 button_default_color = (100, 100, 100)
 button_hover_color = (50, 50, 50)
-
+textbox_inactive_color = (100, 100, 100)
+textbox_active_color = (50, 50, 50)
+game_background_color = (0, 0, 0)
 barrier_density = 0.15
 gen_alpha = 200
 menu_columns = 6
 button_rows = 2
 button_buffer_zone = 10
-
 font = pygame.font.Font("Code New Roman.ttf", tile_size)
 
 # Calculated Constants
@@ -37,6 +39,7 @@ board_color_dict = {'_': empty_tile_color,
 # Variables
 board = [[]]
 buttons = []
+input_boxes = []
 menu_mode = 0
 
 # Classes
@@ -73,6 +76,50 @@ class Button:
         else:
             return button_default_color
         
+# Stolen from here
+# https://stackoverflow.com/questions/46390231/how-to-create-a-text-input-box-with-pygame
+class InputBox:
+
+    def __init__(self, x, y, w, h, text=''):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.color = textbox_inactive_color
+        self.text = text
+        self.txt_surface = font.render(text, True, self.color)
+        self.active = False
+        input_boxes.append(self)
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # If the user clicked on the input_box rect.
+            if self.rect.collidepoint(event.pos):
+                # Toggle the active variable.
+                self.active = not self.active
+            else:
+                self.active = False
+            # Change the current color of the input box.
+            self.color = textbox_active_color if self.active else textbox_inactive_color
+        if event.type == pygame.KEYDOWN:
+            if self.active:
+                if event.key == pygame.K_RETURN:
+                    print(self.text)
+                    self.text = ''
+                elif event.key == pygame.K_BACKSPACE:
+                    self.text = self.text[:-1]
+                else:
+                    self.text += event.unicode
+                # Re-render the text.
+                self.txt_surface = font.render(self.text, True, self.color)
+
+    def update(self):
+        # Resize the box if the text is too long.
+        width = max(200, self.txt_surface.get_width()+10)
+        self.rect.w = width
+
+    def draw(self, screen):
+        # Blit the text.
+        screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
+        # Blit the rect.
+        pygame.draw.rect(screen, self.color, self.rect, 2)
     
 # Generates the game board
 def generate_board():
@@ -132,17 +179,27 @@ def draw_menu():
     menu.fill(empty_tile_color)
     screen.blit(menu, (board_rows * tile_size + buffer_zone * 2, buffer_zone * 2))
     buttons.clear()
+    input_boxes.clear()
     
     if menu_mode == 0:
         button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone,
                              tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
-                             "Host")
-        button_join = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone * 2 + tile_size * button_rows,
-                             tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
-                             "Join")
+                             "Online")
 
     elif menu_mode == 1:
-        button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone,
+        text_surface = font.render("Username: ", True, menu_text_color)
+        text_rect = text_surface.get_rect()
+        text_rect.center = board_rows * tile_size + 2 * buffer_zone + button_buffer_zone + menu_columns * tile_size * 0.5, buffer_zone * 2.5 + button_buffer_zone
+        screen.blit(text_surface, text_rect)
+        
+        username_box = InputBox(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 3 + button_buffer_zone,
+                             tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows)
+        
+        button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 3 + button_buffer_zone * 2 + tile_size * button_rows,
+                             tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
+                             "Connect")
+        
+        button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 3 + button_buffer_zone * 3 + tile_size * button_rows * 2,
                              tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
                              "Cancel")
                          
@@ -164,22 +221,29 @@ draw_board()
 draw_menu()
 
 while game_status == "running":
+    screen.fill(game_background_color)
+    draw_board()
+    draw_menu()
+    
     for event in pygame.event.get():
         if pygame.mouse.get_pressed()[0] == 1:
             for button in buttons:
                 if button.rect.collidepoint(pygame.mouse.get_pos()):
                     action = button.text
                     
-                    if action == "Host":
+                    if action == "Online":
                         menu_mode = 1
-                    elif action == "Join":
-                        menu_mode = 2
                     elif action == "Cancel":
                         menu_mode = 0
                         
-                    draw_menu()
                     break
+        
+        for box in input_boxes:
+            box.handle_event(event)
 
+    for box in input_boxes:
+        box.draw(screen)
+        
     for button in buttons:
         button.draw()
         
