@@ -207,7 +207,39 @@ def draw_menu():
         button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 3 + button_buffer_zone * 3 + tile_size * button_rows * 2,
                              tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
                              "Cancel")
+
+    elif menu_mode == 2:
+        button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone,
+            tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
+            "Host")
+
+        button_host = Button(board_rows * tile_size + 2 * buffer_zone + button_buffer_zone, buffer_zone * 2 + button_buffer_zone * 2 + tile_size * button_rows,
+            tile_size * menu_columns - 2 * button_buffer_zone, tile_size * button_rows,
+            "Join")
+
+def connect():
+    s.connect((host, port))
+    s.send("verify".encode())
+    isAccepted = s.recv(1024).decode()
+    if isAccepted == "accept":
+        menu_mode = 2
+
+def create_game():
+    s.send("create".encode())
+    isAccepted = s.recv(1024).decode()
+    if isAccepted == "accept":
+        menu_mode = 3
     
+def join_game(name):
+    s.send(("join" + name).encode())
+    isAccepted = s.recv(1024).decode()
+    if isAccepted == "accept":
+        menu_mode = 4
+
+def get_games():
+    s.send("list".encode())
+    games = s.recv(1024).decode().split(";")
+        
 screen = pygame.display.set_mode((game_width, game_height))
 game_status = "running"
 
@@ -228,12 +260,18 @@ while game_status == "running":
                     
                     if action == "Online":
                         menu_mode = 1
+                        
                     elif action == "Cancel":
                         menu_mode = 0
-                        s.close()
+                        if s is not None:
+                            s.close()
+                            s = None
+                            
                     elif action == "Connect":
-                        s.connect((host, port))
-                        s.send("hello there".encode())
+                        connect()
+
+                    elif action == "Host":
+                        create_game()
                     break
         
         for box in input_boxes:
