@@ -19,12 +19,12 @@ class Player(socketserver.BaseRequestHandler):
         if args[0] == "verify":
             if len(args) > 1:
                 self.name = args[1]
-                self.request.send("accept".encode())
+                self.send_message("accept")
                 self.verified = True
                 self.in_game = False
             else:
                 self.verified = False
-                self.request.send("decline".encode())
+                self.send_message("decline")
 
         if self.verified == True:      
             if args[0] == "list":
@@ -36,13 +36,16 @@ class Player(socketserver.BaseRequestHandler):
             elif args[0] == "join":
                 game = next((game for game in games if game.host_player.name == button_pressed), None)
                 if game is not None:
-                    self.request.send("accept".encode())
+                    self.send_message("accept")
                     game.set_opponent(self)
                 else:
-                    self.request.send("decline".encode())
-        else:
-            close()
+                    self.send_message("decline")
+
+    def send_message(self, message):
+        print(message)
+        self.request.send(message.encode())
         
 host, port = "0.0.0.0", 34197
 server = socketserver.TCPServer((host, port), Player)
+print("Server started on port " + str(port))
 server.serve_forever()
